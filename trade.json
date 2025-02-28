@@ -1,0 +1,95 @@
+[
+{
+    "model": "trade.currency",
+    "pk": 1,
+    "fields": {
+        "code": "RUB",
+        "name": "Российский рубль",
+        "related_currency": 2,
+        "country": "РФ",
+        "amount": 100.0
+    }
+},
+{
+    "model": "trade.currency",
+    "pk": 2,
+    "fields": {
+        "code": "USD",
+        "name": "Американский доллар",
+        "related_currency": 1,
+        "country": "США",
+        "amount": 0.01
+    }
+},
+{
+    "model": "trade.item",
+    "pk": 1,
+    "fields": {
+        "name": "Ноутбук Dell XPS 16 9640",
+        "description": "Процессор: Intel Core Ultra 9 185H (Ultra9, 185H, 16 ядер, 2.3-5.1 Ггц,, кеш 24 мб)\r\nОперативная память: 64 Gb LPDDR5X (PC6400)\r\nУстановленные накопители и возможности: 1Tb SSD M.2\r\nОбщий объем накопителей: 1024Gb\r\nЭкран: 16.3\" ([3840х2400], IPS, 400 nits, Сенсорный, Глянцевый)\r\nВидеокарта: NVIDIA GeForce RTX 4070 (8gb, GDDR6)\r\nОперационная система: Win11 Home\r\nМатериал корпуса: Алюминиевый корпус\r\nВес: 2.2кг\r\nПодсветка: Подсветка\r\nМощность блока питания: 130W\r\nПрочее: Power Delivery.\r\nЦвет: Platinum\r\nДоступно для предзаказа",
+        "price": 435000.0,
+        "currency": 1,
+        "is_for_transaction": false
+    }
+},
+{
+    "model": "trade.item",
+    "pk": 2,
+    "fields": {
+        "name": "Ноутбук Lenovo LOQ 15ARP9",
+        "description": "Партномер: CUSTOM 83JC0000US\r\nПроцессор: AMD Ryzen 7 7435HS (Ryzen7, 7435HS, 8 ядер, 3.1-4.5 Ггц, кеш 16 мб)\r\nОперативная память: 32gb DDR5 (32gb, PC4800, 2 слота)\r\nУстановленные накопители и возможности: 1Tb SSD M.2\r\nОбщий объем накопителей: 1024Gb\r\nЭкран: 15.6\" ([1920х1080], IPS, 300 nits, 144 Hz, sRGB 100%)\r\nВидеокарта: NVIDIA GeForce RTX 4060 (8gb, GDDR6)\r\nОперационная система: Win11 Home\r\nМатериал корпуса: Металлический корпус\r\nВес: 2.3кг\r\nПодсветка: Подсветка\r\nЦвет: Luna Grey",
+        "price": 112000.0,
+        "currency": 1,
+        "is_for_transaction": false
+    }
+},
+{
+    "model": "trade.item",
+    "pk": 3,
+    "fields": {
+        "name": "Ноутбук Acer Nitro 5 ANV15-51",
+        "description": "Партномер: ANV15-51-789J NH.QRYAA.001\r\nПроцессор: Intel Core i7-13620H (i7, 13620H, 10 ядер, 2.4-4.9 Ггц, кеш 24 мб)\r\nОперативная память: 16gb DDR5 (PC3200)\r\nУстановленные накопители и возможности: 512gb SSD M.2\r\nОбщий объем накопителей: 512Gb\r\nЭкран: 15.6\" ([1920x1080], LCD, 144 Hz, NTSC 45%)\r\nВидеокарта: NVIDIA GeForce RTX 4060 (8gb, GDDR6)\r\nОперационная система: Win11 Home\r\nВес: 2.11 кг\r\nПодсветка: Подсветка\r\nЦвет: Black",
+        "price": 115000.0,
+        "currency": 1,
+        "is_for_transaction": false
+    }
+},
+{
+    "model": "trade.item",
+    "pk": 4,
+    "fields": {
+        "name": "HUAWEI Умные часы GT 4, 46mm, зеленый",
+        "description": "Название цвета\r\nзеленый\r\n\r\nКомплектация\r\nСмарт-часы, Беспроводная зарядная панель и кабель для зарядки, Краткое руководство пользователя, инструкция по технике безопасности\r\n\r\nГарантийный срок\r\n1 год",
+        "price": 100.0,
+        "currency": 2,
+        "is_for_transaction": false
+    }
+},
+{
+    "model": "trade.item",
+    "pk": 5,
+    "fields": {
+        "name": "HUAWEI Умные часы Watch 4 Pro, Dark Brown",
+        "description": "Название цвета\r\nDark Brown\r\n\r\nКомплектация\r\nЧасы, беспроводная зарядная панель (включая зарядный кабель), документация\r\n\r\nГарантийный срок\r\n1 год",
+        "price": 300.0,
+        "currency": 2,
+        "is_for_transaction": false
+    }
+},
+{
+    "model": "trade.tax",
+    "pk": 1,
+    "fields": {
+        "name": "НДС",
+        "tax_base": 20
+    }
+},
+{
+    "model": "trade.discount",
+    "pk": 1,
+    "fields": {
+        "name": "Черная пятница",
+        "discount_base": 10
+    }
+}
+]

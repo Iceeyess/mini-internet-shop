@@ -1,0 +1,37 @@
+{% extends 'trade/base.html' %}
+
+
+{% block content %}
+<a href="{% url 'trade:trade_list' %}" class="btn btn-sm btn-primary" style="align-center">Назад к списку</a>
+
+<main>
+    <div class="row row-cols-1 row-cols-md-3 mb-3 text-center justify-content-center">
+        <div class="col">
+            <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                    <h4 class="my-0 fw-normal">{{ object.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <h1 class="card-title pricing-card-title">{{ object.price|floatformat:2 }}</h1>
+                    <div class="card-description">
+                        {{ object.description }}
+                    </div>
+                    {% if not object.is_for_transaction %}
+                        <a href="{% url 'trade:mark_for_trade' object.pk %}" class="w-100 btn btn-sm btn-primary"
+                           style="align-center">В корзину</a>
+                    {% else %}
+                        <a href="{% url 'trade:mark_for_trade' object.pk %}" class="w-100 btn btn-sm btn-danger"
+                           style="align-center">Убрать из корзины</a>
+                    {% endif %}
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+{% endblock %}
+
+
+

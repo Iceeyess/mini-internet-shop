@@ -1,0 +1,27 @@
+{% extends 'trade/base.html' %}
+
+
+{% block content %}
+
+
+<main>
+    <div class="row row-cols-1 row-cols-md-3 mb-3 text-center justify-content-center">
+        {% for object in object_list %}
+        <div class="col-4">
+            <div class="card mb-4">
+                <div class="card-header py-3">
+                    <h4 class="my-0 fw-normal">{{ object.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'trade:trade_detail' object.pk %}" class="w-100 btn btn-lg btn-primary" style="align-center">Подробнее</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</main>
+
+{% endblock %}
+
+
+

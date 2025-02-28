@@ -1,0 +1,36 @@
+{% load static %}
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Dmitry Krasheninnikov">
+    <meta name="generator" content="Hugo 0.122.0">
+    <title>Pricing example · Bootstrap v5.3</title>
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/pricing/">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/pricing.css' %}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+
+</head>
+<body>
+
+
+<div class="container py-3">
+    {% include 'trade/includes/header.html' %}
+
+    {% block content %}
+
+    {% endblock %}
+
+    {% include 'trade/includes/footer.html' %}
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+</div>
+</body>
+</html>
