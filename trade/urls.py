@@ -11,5 +11,5 @@ urlpatterns = [
     path('mark_for_trade/<int:pk>/', create_pre_order, name='mark_for_trade'),  # Метод для пометки товара для покупки
 
     path('buy/<int:pk>/', payment_session, name='create_payment_session'),
-    path('sell/', OrderCreateView.as_view(), name='order_create')
+    path('pre_order/', OrderCreateView.as_view(), name='order_create')
 ]

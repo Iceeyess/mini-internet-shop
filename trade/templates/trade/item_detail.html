@@ -16,12 +16,16 @@
                     <div class="card-description">
                         {{ object.description }}
                     </div>
-                    {% if not object.is_for_transaction %}
-                        <a href="{% url 'trade:mark_for_trade' object.pk %}" class="w-100 btn btn-sm btn-primary"
-                           style="align-center">В корзину</a>
+
+                    {% if not object.is_for_preorder%}
+
+                    <form method="GET"  action="{% url 'trade:mark_for_trade' object.pk %}">
+                        <input type="number" name="quantity" min="1" max="10" value="1" required>
+                        <button type="submit" class="w-100 btn btn-sm btn-primary">В корзину</button>
+                    </form>
                     {% else %}
-                        <a href="{% url 'trade:mark_for_trade' object.pk %}" class="w-100 btn btn-sm btn-danger"
-                           style="align-center">Убрать из корзины</a>
+                    <a href="{% url 'trade:mark_for_trade' object.pk %}" class="w-100 btn btn-sm btn-danger"
+                       style="align-center">Убрать из корзины</a>
                     {% endif %}
 
 

@@ -33,7 +33,7 @@ class Item(models.Model):
     price = models.FloatField(verbose_name='цена', help_text='введите цену')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, verbose_name='валюта', help_text='введите валюту',
                                  **NULLABLE)
-    is_for_transaction = models.BooleanField(default=False, verbose_name='признак покупки',
+    is_for_preorder = models.BooleanField(default=False, verbose_name='признак покупки',
                                              help_text='положить в корзину?')
 
     def __str__(self):
@@ -75,10 +75,10 @@ class PreOrder(models.Model):
     """Модель корзины(предзаказ). После утверждения, модель стирается.
     Используется как промежуточная таблица.
     Можно было бы привязать к юзеру, но в нашем случае регистрация и модели юзера не предусмотрено"""
-    hash_tag = models.UUIDField(default=uuid.uuid4, verbose_name='Уникальный идентификатор сессии')
+    session_tag = models.UUIDField(default=uuid.uuid4, verbose_name='Уникальный идентификатор сессии')
     item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name='товар')
     quantity = models.PositiveIntegerField(default=1, verbose_name='количество', validators=[MinValueValidator(1),
-                                                                                             MaxValueValidator(100)])
+                                                                                             MaxValueValidator(10)])
     currency_pay = models.ForeignKey(Currency, on_delete=models.CASCADE, verbose_name='валюта расчета',
                                      help_text='введите валюту расчета', **NULLABLE)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='дата создания')
@@ -95,7 +95,7 @@ class PreOrder(models.Model):
         """Свойство подсчета общей стоимости.
         Суммируются все позиции хэш-тега, далее приводятся к нужному курсу"""
         currencies = Currency.objects.all()
-        preorder = self.objects.filter(hash_tag=self.hash_tag)
+        preorder = self.objects.filter(session_tag=self.session_tag)
         result = dict()
         for currency in currencies:
             total_price = 0

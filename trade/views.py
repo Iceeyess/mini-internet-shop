@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.views.generic import DetailView, ListView, CreateView
 
 from config.settings import STRIPE_SECRET_KEY
-from trade.models import Item, Order, PreOrder
+from trade.models import Item, Order, PreOrder, Currency
 import stripe
 
 # Create your views here.
@@ -19,22 +19,33 @@ class ItemDetailView(DetailView):
     model = Item
 
 
-def create_pre_order(request, pk, quantity):
-    """Метод для пометки товара для покупки"""
+def create_pre_order(request, pk):
+    """Метод для пометки товара для покупки. Создание корзины(предзаказ).
+    Хеширование товаров (не через IP, пока).
+    1. Если товара еще нет в корзине, то он создается с определенным номером хеша.
+    2. Если корзина уже что-то имеет, то проверяется есть ли товар там или нет. Если товара нет, то создается доп. линия
+    с тем же хэшем, а если товар есть, то в объекте (item) убирается пометка для корзины is_for_preorder становится
+    False"""
+    quantity = request.GET.get('quantity', 1)
     obj = get_object_or_404(Item, pk=pk)
     pre_order = PreOrder.objects.all()
     if not pre_order.exists():
-        PreOrder.objects.create()
-        obj.is_for_transaction = True
+        PreOrder.objects.create(item=obj, quantity=quantity)
+        obj.is_for_preorder = True
         obj.quantity = quantity
-    elif pre_order.exists() and obj.item in [_.item for _ in pre_order]:
-        obj.is_for_transaction = False
+
+    elif pre_order.exists() and obj in [_.item for _ in pre_order]:
+        obj.is_for_preorder = False
         pre_order.filter(item=obj).delete()
-    else:
-        obj.is_for_transaction = True
+
+    elif pre_order.exists() and not obj in [_.item for _ in pre_order]:
+        obj.is_for_preorder = True
+        session_tag = PreOrder.objects.all().last().session_tag  # копируем уже созданный тег и прикрепляем
+        new_preorder = PreOrder.objects.create(item=obj, quantity=quantity)
+        new_preorder.session_tag = session_tag
+        new_preorder.save()
         obj.quantity = quantity
-        obj.hash_tag = PreOrder.objects.all()[0].hash_tag
-    obj.save(), pre_order.save()
+
     return redirect(reverse('trade:trade_detail', kwargs={'pk': obj.pk}))
 
 
