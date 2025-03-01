@@ -43,9 +43,9 @@ def create_pre_order(request, pk):
         session_tag = PreOrder.objects.all().last().session_tag  # копируем уже созданный тег и прикрепляем
         new_preorder = PreOrder.objects.create(item=obj, quantity=quantity)
         new_preorder.session_tag = session_tag
-        new_preorder.save()
         obj.quantity = quantity
-
+        new_preorder.save()
+    obj.save()
     return redirect(reverse('trade:trade_detail', kwargs={'pk': obj.pk}))
 
 
