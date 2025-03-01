@@ -1,15 +1,32 @@
 {% extends 'trade/base.html' %}
 
-
 {% block content %}
+<form method="POST">
+    {% csrf_token %}
+    {{ formset.management_form }}
 
-{% for pre_order_elem in pre_order_list %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Товар</th>
+                <th>Количество</th>
+                <th>Удалить</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for form in formset %}
+            <tr>
+                <td>
+                    {{ form.id }}
+                    {{ form.instance.item.name }}
+                </td>
+                <td>{{ form.quantity }}</td>
+                <td>{{ form.DELETE }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-{{ pre_order_elem.item }}<br>
-{{ pre_order_elem.quantity }}<br>
-
-{% endfor %}
+    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+</form>
 {% endblock %}
-
-
-

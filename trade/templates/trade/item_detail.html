@@ -12,7 +12,9 @@
                     <h4 class="my-0 fw-normal">{{ object.name }}</h4>
                 </div>
                 <div class="card-body">
-                    <h1 class="card-title pricing-card-title">{{ object.price|floatformat:2 }}</h1>
+                    <h1 class="card-title pricing-card-title">
+                        {{ object.price|floatformat:2 }} {{ object.currency }}
+                    </h1>
                     <div class="card-description">
                         {{ object.description }}
                     </div>

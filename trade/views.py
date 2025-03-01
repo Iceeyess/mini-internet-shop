@@ -1,5 +1,7 @@
+from django.forms import modelformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+from django import forms
 from django.views.generic import DetailView, ListView, CreateView
 
 from config.settings import STRIPE_SECRET_KEY
@@ -50,8 +52,29 @@ def create_pre_order(request, pk):
 
 
 def pre_order_detail(request):
-    pre_order_list = PreOrder.objects.all()
-    return render(request, template_name='trade/preorder_detail.html', context={'pre_order_list': pre_order_list})
+    pre_order_formset = modelformset_factory(PreOrder, fields=['quantity'], extra=0, can_delete=True,
+        widgets={'quantity': forms.NumberInput(attrs={'min': 1}, )
+                 })
+    if request.method == 'POST':
+        formset = pre_order_formset(request.POST, queryset=PreOrder.objects.all())
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+
+            for deleted_obj in formset.deleted_objects:
+                item = deleted_obj.item
+                if not PreOrder.objects.filter(item=item).exclude(pk=deleted_obj.pk).exists():
+                    item.is_for_preorder = False
+                    item.save()
+                deleted_obj.delete()
+
+            for instance in instances:
+                instance.save()
+
+            return redirect('trade:pre_order_detail')
+    else:
+        formset = pre_order_formset(queryset=PreOrder.objects.all())
+    return render(request, template_name='trade/preorder_detail.html', context={'formset': formset})
+
 
 def payment_session(request, pk):
     """Метод для получения сессии оплаты"""
