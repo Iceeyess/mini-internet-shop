@@ -49,6 +49,10 @@ def create_pre_order(request, pk):
     return redirect(reverse('trade:trade_detail', kwargs={'pk': obj.pk}))
 
 
+def pre_order_detail(request):
+    pre_order_list = PreOrder.objects.all()
+    return render(request, template_name='trade/preorder_detail.html', context={'pre_order_list': pre_order_list})
+
 def payment_session(request, pk):
     """Метод для получения сессии оплаты"""
     obj = Item.objects.get(pk=pk)
@@ -70,8 +74,3 @@ def payment_session(request, pk):
     )
     return redirect(session.url)
 
-
-class OrderCreateView(CreateView):
-    """Класс создания заказа (корзина)"""
-    model = Order
-    fields = ['item', 'quantity', 'tax', 'discount']

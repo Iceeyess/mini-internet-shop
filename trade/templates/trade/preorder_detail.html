@@ -1,0 +1,15 @@
+{% extends 'trade/base.html' %}
+
+
+{% block content %}
+
+{% for pre_order_elem in pre_order_list %}
+
+{{ pre_order_elem.item }}<br>
+{{ pre_order_elem.quantity }}<br>
+
+{% endfor %}
+{% endblock %}
+
+
+

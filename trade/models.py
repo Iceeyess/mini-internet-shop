@@ -11,12 +11,12 @@ NULLABLE = dict(blank=True, null=True)
 
 class Currency(models.Model):
     """Модель курса валют"""
-    code = models.CharField(max_length=3, verbose_name='буквенный код', help_text='ведите 3х-значный буквенный код')
+    code = models.CharField(max_length=3, verbose_name='буквенный код', help_text='введите 3х-значный буквенный код')
     name = models.CharField(max_length=150, verbose_name='полное название курса', help_text='')
-    related_currency = models.ForeignKey('self', on_delete=models.CASCADE,
+    related_currency = models.CharField(max_length=3, help_text='введите 3х-значный буквенный код',
                                          verbose_name='отношение текущего курса к другому', **NULLABLE)
     country = models.CharField(max_length=150, verbose_name='страна валюты', help_text='ведите страну валюты')
-    amount = models.FloatField(verbose_name='сумма')
+    value = models.FloatField(verbose_name='курс валюты')
 
     def __str__(self):
         return f'{self.code}'

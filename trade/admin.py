@@ -37,5 +37,5 @@ class PreOrderAdmin(admin.ModelAdmin):
 
 @admin.register(Currency)
 class CurrencyAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'code', 'name', 'related_currency', 'country', 'amount', )
-    list_display_link = ('pk', 'code', 'name', 'related_currency', 'country', 'amount', )
+    list_display = ('pk', 'code', 'name', 'related_currency', 'country', 'value', )
+    list_display_link = ('pk', 'code', 'name', 'related_currency', 'country', 'value', )
