@@ -100,7 +100,7 @@ def pre_order_detail(request):
 
 def get_payment_session(request):
     """Метод для получения сессии оплаты"""
-    obj = Item.objects.get(pk=pk)
+    obj = PreOrder.objects.all()
     stripe.api_key = STRIPE_SECRET_KEY
     session = stripe.checkout.Session.create(
         line_items=[{

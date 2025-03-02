@@ -24,6 +24,7 @@
                 <th>Товар</th>
                 <th>Количество</th>
                 <th>Цена</th>
+                <th>Валюта</th>
                 <th>Удалить</th>
             </tr>
         </thead>
@@ -36,7 +37,8 @@
                         {{ form.instance.item.name }}
                     </td>
                     <td>{{ form.quantity }}</td>
-                    <td>{{ form.instance.item.price|multiply:tax.tax_base }} {{ form.instance.item.currency }}</td>
+                    <td>{{ form.instance.item.price|multiply:tax.tax_base }}</td>
+                    <td>{{ form.instance.item.currency }}</td>
                     <td>
                         <div class="form-check">
                             {{ form.DELETE }}
@@ -54,5 +56,8 @@
 
     <button type="submit" class="btn btn-success">Сохранить изменения</button>
     <a href="{% url 'trade:create_payment_session' %}" class="btn btn-secondary">Оплатить</a>
+    <br></br>
+    <h6>Нажмите сохранить изменения для подсчета стоимости в указанной валюте</h6>
+    <h6>При нажатии кнопки отправить, перенаправляетесь для оплаты с указанной валютой</h6>
 </form>
 {% endblock %}
