@@ -23,7 +23,12 @@ class ItemListView(ListView):
 class ItemDetailView(DetailView):
     """Класс детализации товара"""
     model = Item
-    extra_context = {'tax': Tax.objects.filter(name='НДС')}
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tax = get_object_or_404(Tax, name='НДС')
+        context['tax'] = tax if tax else 0
+        return context
 
 
 def create_pre_order(request, pk):
@@ -91,7 +96,7 @@ def pre_order_detail(request):
     return render(request, template_name='trade/preorder_detail.html', context={'formset': formset,
                                                                                 'currencies': currencies,
                                                                                 'total_sum': total_sum,
-                                                                                'tax': Tax.objects.filter(name='НДС')[0]})
+                                                                                'tax': get_object_or_404(Tax, name='НДС')})
 
 
 def get_payment_session(request):
