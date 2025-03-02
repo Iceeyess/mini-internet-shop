@@ -109,13 +109,15 @@ python manage.py runserver
 Если ошибок нет и, подключение к БД успешно, то выйдите из режима разработчика через Ctrl + L,
 введите 
 
-pip manage.py makemigrations && pip manage.py migrate
+python3 manage.py makemigrations && python3 manage.py migrate
 
 Как только модели создадутся, создайте модель user и приложение trade:
 
 python manage.py loaddata user.json
 
 python manage.py loaddata trade.json
+
+если нужен будет доступ в админку, то логин: admin, а пароль: 1234
 
 Как только фикстуры загрузятся, запустите проект:
 python manage.py runserver
