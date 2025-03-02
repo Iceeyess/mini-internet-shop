@@ -75,7 +75,8 @@ class PreOrder(models.Model):
     """Модель корзины(предзаказ). После утверждения, модель стирается.
     Используется как промежуточная таблица.
     Можно было бы привязать к юзеру, но в нашем случае регистрация и модели юзера не предусмотрено"""
-    session_tag = models.UUIDField(default=uuid.uuid4, verbose_name='Уникальный идентификатор сессии')
+    # session_tag = models.UUIDField(default=uuid.uuid4, verbose_name='Уникальный идентификатор сессии')
+    client_ip = models.GenericIPAddressField(verbose_name='IP-адрес клиента', **NULLABLE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name='товар')
     quantity = models.PositiveIntegerField(default=1, verbose_name='количество', validators=[MinValueValidator(1),
                                                                                              MaxValueValidator(10)])

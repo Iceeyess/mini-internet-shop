@@ -32,8 +32,8 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(PreOrder)
 class PreOrderAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'session_tag', 'item', 'quantity', )
-    list_display_link = ('pk', 'session_tag', 'item', 'quantity', )
+    list_display = ('pk', 'item', 'quantity', )
+    list_display_link = ('pk', 'item', 'quantity', )
 
 @admin.register(Currency)
 class CurrencyAdmin(admin.ModelAdmin):

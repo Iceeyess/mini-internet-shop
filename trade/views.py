@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django import forms
 from django.views.generic import DetailView, ListView, CreateView
+from ipware import get_client_ip
 
 from config.settings import STRIPE_SECRET_KEY
 from trade.models import Item, Order, PreOrder, Currency, Tax
@@ -25,30 +26,23 @@ class ItemDetailView(DetailView):
 
 def create_pre_order(request, pk):
     """Метод для пометки товара для покупки. Создание корзины(предзаказ).
-    Хеширование товаров (не через IP, пока).
-    1. Если товара еще нет в корзине, то он создается с определенным номером хеша.
-    2. Если корзина уже что-то имеет, то проверяется есть ли товар там или нет. Если товара нет, то создается доп. линия
-    с тем же хэшем, а если товар есть, то в объекте (item) убирается пометка для корзины is_for_preorder становится
-    False"""
+    """
     quantity = request.GET.get('quantity', 1)
     obj = get_object_or_404(Item, pk=pk)
-    pre_order = PreOrder.objects.all()
-    if not pre_order.exists():
-        PreOrder.objects.create(item=obj, quantity=quantity)
+    client_ip, _ = get_client_ip(request)  # IP address
+    preorder_by_ip = PreOrder.objects.filter(client_ip=client_ip)
+    if not preorder_by_ip.exists():
+        PreOrder.objects.create(item=obj, quantity=quantity, client_ip=client_ip)
         obj.is_for_preorder = True
         obj.quantity = quantity
 
-    elif pre_order.exists() and obj in [_.item for _ in pre_order]:
+    elif preorder_by_ip.exists() and obj in [_.item for _ in preorder_by_ip]:
         obj.is_for_preorder = False
-        pre_order.filter(item=obj).delete()
+        preorder_by_ip.delete()
 
-    elif pre_order.exists() and not obj in [_.item for _ in pre_order]:
+    elif preorder_by_ip.exists() and not obj in [_.item for _ in preorder_by_ip]:
         obj.is_for_preorder = True
-        session_tag = PreOrder.objects.all().last().session_tag  # копируем уже созданный тег и прикрепляем
-        new_preorder = PreOrder.objects.create(item=obj, quantity=quantity)
-        new_preorder.session_tag = session_tag
-        obj.quantity = quantity
-        new_preorder.save()
+        PreOrder.objects.create(item=obj, quantity=quantity, client_ip=client_ip)
     obj.save()
     return redirect(reverse('trade:trade_detail', kwargs={'pk': obj.pk}))
 
@@ -99,7 +93,10 @@ def pre_order_detail(request):
 
 
 def get_payment_session(request):
-    """Метод для получения сессии оплаты"""
+    """Метод для получения сессии оплаты. Более корректный метод определения нужно товара в корзине по IP,
+    но в нашем случае, по условиям задачи это не предусмотрено. Поэтому, отбор нужным продуктов из корзины будет
+    по условию - ВСЕ. В реальной жизни, я бы вместо хэширования в модели PreOrder оставил GenericIPAddressField,
+    затем уже при отборе товаров отбирал по IP"""
     obj = PreOrder.objects.all()
     stripe.api_key = STRIPE_SECRET_KEY
     session = stripe.checkout.Session.create(
