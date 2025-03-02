@@ -23,7 +23,7 @@ class ItemListView(ListView):
 class ItemDetailView(DetailView):
     """Класс детализации товара"""
     model = Item
-    extra_context = {'tax': Tax.objects.filter(name='НДС')[0]}
+    extra_context = {'tax': Tax.objects.filter(name='НДС')}
 
 
 def create_pre_order(request, pk):
