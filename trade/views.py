@@ -109,8 +109,10 @@ def get_payment_session(request):
                         'name': pre_order.item.name,
                     },
                     'unit_amount': int(pre_order.item.price * pre_order.quantity),
+                    'tax_behavior': 'exclusive',
                 },
-                'quantity': pre_order.quantity
+                'quantity': pre_order.quantity,
+                'tax_rates': [int(get_object_or_404(Tax, name='НДС').tax_base), ]
             })
         session = stripe.checkout.Session.create(
             line_items=line_items,
