@@ -52,13 +52,15 @@ def create_pre_order(request, pk):
 
 
 def pre_order_detail(request):
+    """Редактирование корзины. Добавил формсеты, чтобы была возможность удаления продукта из корзины, восстановления
+    статуса False для is_for_preorder"""
     pre_order_formset = modelformset_factory(PreOrder, fields=['quantity'], extra=0, can_delete=True,
         widgets={'quantity': forms.NumberInput(attrs={'min': 1}, )
                  })
     if request.method == 'POST':
         formset = pre_order_formset(request.POST, queryset=PreOrder.objects.all())
         if formset.is_valid():
-            instances = formset.save(commit=False)
+            instances = formset.save(commit=False)  # без commit=False не будет работать удаление
 
             for deleted_obj in formset.deleted_objects:
                 item = deleted_obj.item
