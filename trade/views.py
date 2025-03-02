@@ -1,3 +1,5 @@
+from http.client import HTTPResponse
+
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -93,25 +95,29 @@ def pre_order_detail(request):
 
 
 def get_payment_session(request):
-    """Метод для получения сессии оплаты. Более корректный метод определения нужно товара в корзине по IP,
-    но в нашем случае, по условиям задачи это не предусмотрено. Поэтому, отбор нужным продуктов из корзины будет
-    по условию - ВСЕ. В реальной жизни, я бы вместо хэширования в модели PreOrder оставил GenericIPAddressField,
-    затем уже при отборе товаров отбирал по IP"""
-    obj = PreOrder.objects.all()
+    """Метод для получения сессии оплаты. """
+    client_ip = get_client_ip(request)
+    obj = PreOrder.objects.filter(client_ip=client_ip[0])
     stripe.api_key = STRIPE_SECRET_KEY
-    session = stripe.checkout.Session.create(
-        line_items=[{
-            'price_data': {
-                'currency': 'rub',
-                'product_data': {
-                    'name': obj.name,
+    if obj:
+        line_items =[]
+        for pre_order in obj:
+            line_items.append({
+                'price_data': {
+                    'currency': pre_order.currency_pay,
+                    'product_data': {
+                        'name': pre_order.item.name,
+                    },
+                    'unit_amount': int(pre_order.item.price * pre_order.quantity),
                 },
-                'unit_amount': int(obj.price),
-            },
-            'quantity': 1,
-        }],
-        mode='payment',
-        success_url=f'{request._current_scheme_host + reverse("trade:trade_list")}',
-        cancel_url=f'{request._current_scheme_host + reverse("trade:trade_list")}',
-    )
+                'quantity': pre_order.quantity
+            })
+        session = stripe.checkout.Session.create(
+            line_items=line_items,
+            mode='payment',
+            success_url=f'{request._current_scheme_host + reverse("trade:trade_list")}',
+            cancel_url=f'{request._current_scheme_host + reverse("trade:pre_order_detail")}',
+        )
+    else:
+        return HTTPResponse('В корзине пусто')
     return redirect(session.url)
