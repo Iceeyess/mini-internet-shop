@@ -30,7 +30,7 @@ class Item(models.Model):
     """Модель наименования товара"""
     name = models.CharField(max_length=250, verbose_name='наименование', help_text='введите наименование')
     description = models.TextField(verbose_name='описание', help_text='ведите описание', **NULLABLE)
-    price = models.FloatField(verbose_name='цена', help_text='введите цену')
+    price = models.FloatField(verbose_name='цена без налога', help_text='введите цену без налога')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, verbose_name='валюта', help_text='введите валюту',
                                  **NULLABLE)
     is_for_preorder = models.BooleanField(default=False, verbose_name='признак покупки',
@@ -90,24 +90,6 @@ class PreOrder(models.Model):
 
     def __str__(self):
         return f"Предзаказ #{self.id} ({self.item.name})"
-
-    def total_price(self):
-        """Свойство подсчета общей стоимости.
-        Суммируются все позиции хэш-тега, далее приводятся к нужному курсу"""
-        currencies = Currency.objects.all()
-        preorder = self.objects.filter(session_tag=self.session_tag)
-        result = dict()
-        for currency in currencies:
-            total_price = 0
-            for item in preorder:
-                if currency == item.currency_pay:
-                    total_price += item.item.price * item.quantity
-                else:
-                    total_price += item.item.price * item.quantity * item.currency_pay.amount
-                    total_price = round(total_price, 2)
-            result.update({currency: total_price})
-        return result
-
 
 class Order(models.Model):
     """Модель заказа"""

@@ -5,8 +5,9 @@ from django import forms
 from django.views.generic import DetailView, ListView, CreateView
 
 from config.settings import STRIPE_SECRET_KEY
-from trade.models import Item, Order, PreOrder, Currency
+from trade.models import Item, Order, PreOrder, Currency, Tax
 import stripe
+
 
 # Create your views here.
 
@@ -19,6 +20,7 @@ class ItemListView(ListView):
 class ItemDetailView(DetailView):
     """Класс детализации товара"""
     model = Item
+    extra_context = {'tax': Tax.objects.filter(name='НДС')[0]}
 
 
 def create_pre_order(request, pk):
@@ -55,30 +57,48 @@ def pre_order_detail(request):
     """Редактирование корзины. Добавил формсеты, чтобы была возможность удаления продукта из корзины, восстановления
     статуса False для is_for_preorder"""
     pre_order_formset = modelformset_factory(PreOrder, fields=['quantity'], extra=0, can_delete=True,
-        widgets={'quantity': forms.NumberInput(attrs={'min': 1}, )
-                 })
+                                             widgets={'quantity': forms.NumberInput(attrs={'min': 1}, )
+                                                      })
+    currencies = Currency.objects.all()
+    total_sum = 0
     if request.method == 'POST':
         formset = pre_order_formset(request.POST, queryset=PreOrder.objects.all())
         if formset.is_valid():
             instances = formset.save(commit=False)  # без commit=False не будет работать удаление
-
+            # Блок проверки удаленных объектов
             for deleted_obj in formset.deleted_objects:
                 item = deleted_obj.item
                 if not PreOrder.objects.filter(item=item).exclude(pk=deleted_obj.pk).exists():
                     item.is_for_preorder = False
                     item.save()
                 deleted_obj.delete()
-
+            # Сохранение изменений в БД
             for instance in instances:
                 instance.save()
 
-            return redirect('trade:pre_order_detail')
+            # Блок расчета итоговой суммы в указанной валюте
+            currency = get_object_or_404(Currency, id=request.POST.get('currency'))
+            for pre_order in formset.queryset:
+                pre_order.currency_pay = currency  # сохраняем выбранный курс валюты расчета в БД
+                pre_order.save()
+                if pre_order.item.currency == currency:
+                    total_sum += pre_order.item.price + pre_order.item.price * get_object_or_404(Tax,
+                    name='НДС').tax_base / pre_order.item.price * pre_order.quantity
+                else:
+                    total_sum += (pre_order.item.price + (pre_order.item.price * get_object_or_404(Tax,
+                    name='НДС').tax_base / 100)) * pre_order.quantity / get_object_or_404(
+                    Currency, related_currency=currency.code).value
+
     else:
         formset = pre_order_formset(queryset=PreOrder.objects.all())
-    return render(request, template_name='trade/preorder_detail.html', context={'formset': formset})
+
+    return render(request, template_name='trade/preorder_detail.html', context={'formset': formset,
+                                                                                'currencies': currencies,
+                                                                                'total_sum': total_sum,
+                                                                                'tax': Tax.objects.filter(name='НДС')[0]})
 
 
-def payment_session(request, pk):
+def get_payment_session(request):
     """Метод для получения сессии оплаты"""
     obj = Item.objects.get(pk=pk)
     stripe.api_key = STRIPE_SECRET_KEY
@@ -98,4 +118,3 @@ def payment_session(request, pk):
         cancel_url=f'{request._current_scheme_host + reverse("trade:trade_list")}',
     )
     return redirect(session.url)
-

@@ -1,5 +1,5 @@
 {% extends 'trade/base.html' %}
-
+{% load math_filters %}
 
 {% block content %}
 <a href="{% url 'trade:trade_list' %}" class="btn btn-sm btn-primary" style="align-center">Назад к списку</a>
@@ -13,7 +13,7 @@
                 </div>
                 <div class="card-body">
                     <h1 class="card-title pricing-card-title">
-                        {{ object.price|floatformat:2 }} {{ object.currency }}
+                        {{ object.price|multiply:tax.tax_base }} {{ object.currency }}
                     </h1>
                     <div class="card-description">
                         {{ object.description }}

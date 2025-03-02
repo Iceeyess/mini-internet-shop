@@ -1,32 +1,58 @@
 {% extends 'trade/base.html' %}
-
+{% load math_filters %}
 {% block content %}
 <form method="POST">
     {% csrf_token %}
+
+    <div class="currency-selector mb-4">
+        <label class="form-label">Валюта расчета:</label>
+        <select name="currency" class="form-select">
+            {% for currency in currencies %}
+                <option value="{{ currency.id }}"
+                    {% if current_currency and currency.id == current_currency.id %}selected{% endif %}>
+                    {{ currency.symbol }} ({{ currency.code }})
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
     {{ formset.management_form }}
 
-    <table class="table">
-        <thead>
+    <table class="table table-striped">
+        <thead class="table-dark">
             <tr>
                 <th>Товар</th>
                 <th>Количество</th>
+                <th>Цена</th>
                 <th>Удалить</th>
             </tr>
         </thead>
         <tbody>
             {% for form in formset %}
-            <tr>
-                <td>
-                    {{ form.id }}
-                    {{ form.instance.item.name }}
-                </td>
-                <td>{{ form.quantity }}</td>
-                <td>{{ form.DELETE }}</td>
-            </tr>
+                {% if not form.DELETE.value %}  <!-- Скрываем помеченные на удаление -->
+                <tr>
+                    <td>
+                        {{ form.id }}
+                        {{ form.instance.item.name }}
+                    </td>
+                    <td>{{ form.quantity }}</td>
+                    <td>{{ form.instance.item.price|multiply:tax.tax_base }} {{ form.instance.item.currency }}</td>
+                    <td>
+                        <div class="form-check">
+                            {{ form.DELETE }}
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
             {% endfor %}
         </tbody>
     </table>
 
-    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+    <div class="total-sum mb-3">
+        <h4>Итого: {{ total_sum }} {{ current_currency.symbol }}</h4>
+    </div>
+
+    <button type="submit" class="btn btn-success">Сохранить изменения</button>
+    <a href="{% url 'trade:create_payment_session' %}" class="btn btn-secondary">Оплатить</a>
 </form>
 {% endblock %}
