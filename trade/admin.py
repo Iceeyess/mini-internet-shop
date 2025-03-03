@@ -15,8 +15,8 @@ class ItemAdmin(admin.ModelAdmin):
 
 @admin.register(Tax)
 class TaxAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'name', 'tax_base', )
-    list_display_link = ('pk', 'name', 'tax_base', )
+    list_display = ('pk', 'name', 'tax_base', 'stripe_tax_id', )
+    list_display_link = ('pk', 'name', 'tax_base', 'stripe_tax_id', )
     search_fields = ('name', 'tax_base', )
 
 @admin.register(Discount)

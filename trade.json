@@ -81,7 +81,8 @@
     "pk": 1,
     "fields": {
         "name": "НДС",
-        "tax_base": 20
+        "tax_base": 20,
+        "stripe_tax_id": "txr_1QyctRGIug5DXRxSpfNicRQ4"
     }
 },
 {

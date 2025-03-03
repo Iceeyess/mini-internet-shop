@@ -49,6 +49,7 @@ class Tax(models.Model):
     """Модель налогов"""
     name = models.CharField(max_length=150, verbose_name='налог', help_text='введите наименование налога')
     tax_base = models.PositiveIntegerField(verbose_name='ставка', help_text='введите ставку налога в процентах')
+    stripe_tax_id = models.CharField(max_length=200, verbose_name='id номер от stripe tax rate')
 
     def __str__(self):
         return f'{self.name} - {self.tax_base}'

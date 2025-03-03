@@ -107,17 +107,23 @@ def get_payment_session(request):
     if obj:
         line_items =[]
         for pre_order in obj:
+            if pre_order.currency_pay == pre_order.item.currency:
+                price = pre_order.item.price
+                print(1)
+            else:
+                print(2)
+                price = pre_order.item.price * pre_order.item.currency.value
             line_items.append({
                 'price_data': {
                     'currency': pre_order.currency_pay,
                     'product_data': {
                         'name': pre_order.item.name,
                     },
-                    'unit_amount': int(pre_order.item.price * pre_order.quantity),
+                    'unit_amount': int(price * pre_order.quantity),
                     'tax_behavior': 'exclusive',
                 },
                 'quantity': pre_order.quantity,
-                'tax_rates': [int(get_object_or_404(Tax, name='НДС').tax_base), ]
+                'tax_rates': [get_object_or_404(Tax, name='НДС').stripe_tax_id, ]
             })
         session = stripe.checkout.Session.create(
             line_items=line_items,
