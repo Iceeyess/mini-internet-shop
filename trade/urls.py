@@ -1,7 +1,8 @@
 from trade.apps import TradeConfig
 from django.urls import path
 
-from trade.views import ItemDetailView, ItemListView, get_payment_session, create_pre_order, pre_order_detail
+from trade.views import ItemDetailView, ItemListView, get_payment_session, create_pre_order, pre_order_detail, \
+    get_success_page
 
 app_name = TradeConfig.name
 
@@ -12,4 +13,5 @@ urlpatterns = [
 
     path('buy/', get_payment_session, name='create_payment_session'),
     path('pre_order/', pre_order_detail, name='pre_order_detail'),
+    path('created_order/', get_success_page, name='create_success_page'),  # Создание заказа
 ]

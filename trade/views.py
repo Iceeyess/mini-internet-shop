@@ -1,6 +1,7 @@
 from http.client import HTTPResponse
 
 from django.forms import modelformset_factory
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django import forms
@@ -10,6 +11,8 @@ from ipware import get_client_ip
 from config.settings import STRIPE_SECRET_KEY
 from trade.models import Item, Order, PreOrder, Currency, Tax
 import stripe
+
+from trade.services import generate_order_number
 
 
 # Create your views here.
@@ -84,11 +87,11 @@ def pre_order_detail(request):
                 pre_order.save()
                 if pre_order.item.currency == currency:
                     total_sum += pre_order.item.price + pre_order.item.price * get_object_or_404(Tax,
-                    name='НДС').tax_base / 100 * pre_order.quantity
+                                                                                                 name='НДС').tax_base / 100 * pre_order.quantity
                 else:
                     total_sum += (pre_order.item.price + (pre_order.item.price * get_object_or_404(Tax,
-                    name='НДС').tax_base / 100)) * pre_order.quantity / get_object_or_404(
-                    Currency, related_currency=currency.code).value
+                                                                                                   name='НДС').tax_base / 100)) * pre_order.quantity / get_object_or_404(
+                        Currency, related_currency=currency.code).value
 
     else:
         formset = pre_order_formset(queryset=PreOrder.objects.all())
@@ -96,7 +99,8 @@ def pre_order_detail(request):
     return render(request, template_name='trade/preorder_detail.html', context={'formset': formset,
                                                                                 'currencies': currencies,
                                                                                 'total_sum': total_sum,
-                                                                                'tax': get_object_or_404(Tax, name='НДС')})
+                                                                                'tax': get_object_or_404(Tax,
+                                                                                                         name='НДС')})
 
 
 def get_payment_session(request):
@@ -105,35 +109,60 @@ def get_payment_session(request):
     obj = PreOrder.objects.filter(client_ip=client_ip[0])
     stripe.api_key = STRIPE_SECRET_KEY
     if obj:
-        line_items =[]
+        line_items = []
         for pre_order in obj:
             if pre_order.currency_pay == pre_order.item.currency:
-                price = pre_order.item.price * 100  # до множается на 100 из-за копеек
-                print(1)
+                price = pre_order.item.price * 100  # умножается на 100 из-за копеек
             else:
-                print(2)
-                price = pre_order.item.price / pre_order.item.currency.value * 100  # до множается на 100 из-за копеек
-            line_items.append({
-                'price_data': {
-                    'currency': pre_order.currency_pay.code,
-                    'product_data': {
-                        'name': pre_order.item.name,
+                price = pre_order.item.price / pre_order.item.currency.value * 100  # умножается на 100 из-за копеек
+            try:
+                line_items.append({
+                    'price_data': {
+                        'currency': pre_order.currency_pay.code,
+                        'product_data': {
+                            'name': pre_order.item.name,
+                        },
+                        'unit_amount': int(price),
+                        'tax_behavior': 'exclusive',
                     },
-                    'unit_amount': int(price),
-                    'tax_behavior': 'exclusive',
-                },
-                'quantity': pre_order.quantity,
-                'tax_rates': [get_object_or_404(Tax, name='НДС').stripe_tax_id, ]
-            })
-        print(line_items)
-        session = stripe.checkout.Session.create(
+                    'quantity': pre_order.quantity,
+                    'tax_rates': [pre_order.item.tax.stripe_tax_id, ]
+                })
+            except AttributeError:
+                return redirect('trade:pre_order_detail')
+
+
+        try:
+            session = stripe.checkout.Session.create(
             line_items=line_items,
             mode='payment',
             currency=obj[0].currency_pay,
             payment_method_types=['card'],
-            success_url=f'{request._current_scheme_host + reverse("trade:trade_list")}',
+            success_url=f'{request._current_scheme_host + reverse("trade:create_success_page")}',
             cancel_url=f'{request._current_scheme_host + reverse("trade:pre_order_detail")}',
         )
+        except stripe.InvalidRequestError:
+            return HTTPResponse('Недопустимая сумма')
+
     else:
-        return HTTPResponse('В корзине пусто')
+        return redirect('trade:pre_order_detail')  # Перенаправление, если корзина пуста на ту же страницу
     return redirect(session.url)
+
+
+def get_success_page(request):
+    client_ip = get_client_ip(request)
+    obj = PreOrder.objects.filter(client_ip=client_ip[0])
+    order_number = generate_order_number()
+    if obj:
+        for pre_order in obj:
+            Order.objects.create(order_number=order_number, item=pre_order.item, quantity=pre_order.quantity,
+                                 tax=pre_order.item.tax, discount=pre_order.discount)
+            pre_order.item.is_for_preorder = False
+            pre_order.item.save()  # Восстанавливаем доступный статус для корзины обратно
+            pre_order.delete()  # Удаляем созданные предзаказы
+
+    return render(request, 'trade/success_page.html',
+           {'order_number': Order.objects.filter(order_number=order_number)})
+
+
+

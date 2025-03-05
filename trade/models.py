@@ -24,25 +24,7 @@ class Currency(models.Model):
     class Meta:
         verbose_name = 'курс валюты'
         verbose_name_plural = 'курсы валют'
-
-
-class Item(models.Model):
-    """Модель наименования товара"""
-    name = models.CharField(max_length=250, verbose_name='наименование', help_text='введите наименование')
-    description = models.TextField(verbose_name='описание', help_text='ведите описание', **NULLABLE)
-    price = models.FloatField(verbose_name='цена без налога', help_text='введите цену без налога')
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, verbose_name='валюта', help_text='введите валюту',
-                                 **NULLABLE)
-    is_for_preorder = models.BooleanField(default=False, verbose_name='признак покупки',
-                                             help_text='положить в корзину?')
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = 'товар'
-        verbose_name_plural = 'товары'
-        ordering = ['name', ]
+        ordering = ['pk', ]
 
 
 class Tax(models.Model):
@@ -57,6 +39,26 @@ class Tax(models.Model):
     class Meta:
         verbose_name = 'налог'
         verbose_name_plural = 'налоги'
+
+
+class Item(models.Model):
+    """Модель наименования товара"""
+    name = models.CharField(max_length=250, verbose_name='наименование', help_text='введите наименование')
+    description = models.TextField(verbose_name='описание', help_text='ведите описание', **NULLABLE)
+    price = models.FloatField(verbose_name='цена без налога', help_text='введите цену без налога')
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, verbose_name='валюта', help_text='введите валюту',
+                                 **NULLABLE)
+    tax = models.ForeignKey(Tax, on_delete=models.CASCADE, verbose_name='примененный налог к учету', **NULLABLE)
+    is_for_preorder = models.BooleanField(default=False, verbose_name='признак покупки',
+                                             help_text='положить в корзину?')
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'товар'
+        verbose_name_plural = 'товары'
+        ordering = ['name', ]
 
 
 class Discount(models.Model):
@@ -83,25 +85,30 @@ class PreOrder(models.Model):
                                                                                              MaxValueValidator(10)])
     currency_pay = models.ForeignKey(Currency, on_delete=models.CASCADE, verbose_name='валюта расчета',
                                      help_text='введите валюту расчета', **NULLABLE)
+    discount = models.ForeignKey(Discount, on_delete=models.CASCADE, verbose_name='примененная скидка к заказу', **NULLABLE)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='дата обновления')
+
 
     class Meta:
         verbose_name = 'корзина'
         verbose_name_plural = 'корзины'
 
     def __str__(self):
-        return f"Предзаказ #{self.id} ({self.item.name})"
+        return f"Предзаказ для клиента {self.client_ip} ({self.item.name})"
 
 class Order(models.Model):
     """Модель заказа"""
+    order_number = models.CharField(max_length=50, verbose_name='номер заказа')
     item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name='товар')
     quantity = models.PositiveIntegerField(verbose_name='количество')
     tax = models.ForeignKey(Tax, on_delete=models.CASCADE, verbose_name='налог')
-    discount = models.ForeignKey(Discount, on_delete=models.CASCADE, verbose_name='скидка')
+    discount = models.ForeignKey(Discount, on_delete=models.CASCADE, verbose_name='скидка', **NULLABLE)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='дата обновления')
 
     def __str__(self):
-        return f"Заказ #{self.id})"
+        return f"Заказ #{self.order_number})"
 
     class Meta:
         verbose_name = 'заказ'
