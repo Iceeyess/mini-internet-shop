@@ -58,7 +58,7 @@ def pre_order_detail(request):
     """Редактирование корзины. Добавил формсеты, чтобы была возможность удаления продукта из корзины, восстановления
     статуса False для is_for_preorder"""
     pre_order_formset = modelformset_factory(PreOrder, fields=['quantity'], extra=0, can_delete=True,
-                                             widgets={'quantity': forms.NumberInput(attrs={'min': 1}, )
+                                             widgets={'quantity': forms.NumberInput(attrs={'min': 1, 'max': 10}, )
                                                       })
     currencies = Currency.objects.all()
     total_sum = 0
@@ -84,7 +84,7 @@ def pre_order_detail(request):
                 pre_order.save()
                 if pre_order.item.currency == currency:
                     total_sum += pre_order.item.price + pre_order.item.price * get_object_or_404(Tax,
-                    name='НДС').tax_base / pre_order.item.price * pre_order.quantity
+                    name='НДС').tax_base / 100 * pre_order.quantity
                 else:
                     total_sum += (pre_order.item.price + (pre_order.item.price * get_object_or_404(Tax,
                     name='НДС').tax_base / 100)) * pre_order.quantity / get_object_or_404(
@@ -100,7 +100,7 @@ def pre_order_detail(request):
 
 
 def get_payment_session(request):
-    """Метод для получения сессии оплаты. """
+    """Метод для получения сессии оплаты. API Stripe не выдерживает суммы в рублях более 1 мрн р."""
     client_ip = get_client_ip(request)
     obj = PreOrder.objects.filter(client_ip=client_ip[0])
     stripe.api_key = STRIPE_SECRET_KEY
@@ -108,26 +108,29 @@ def get_payment_session(request):
         line_items =[]
         for pre_order in obj:
             if pre_order.currency_pay == pre_order.item.currency:
-                price = pre_order.item.price
+                price = pre_order.item.price * 100  # до множается на 100 из-за копеек
                 print(1)
             else:
                 print(2)
-                price = pre_order.item.price * pre_order.item.currency.value
+                price = pre_order.item.price / pre_order.item.currency.value * 100  # до множается на 100 из-за копеек
             line_items.append({
                 'price_data': {
-                    'currency': pre_order.currency_pay,
+                    'currency': pre_order.currency_pay.code,
                     'product_data': {
                         'name': pre_order.item.name,
                     },
-                    'unit_amount': int(price * pre_order.quantity),
+                    'unit_amount': int(price),
                     'tax_behavior': 'exclusive',
                 },
                 'quantity': pre_order.quantity,
                 'tax_rates': [get_object_or_404(Tax, name='НДС').stripe_tax_id, ]
             })
+        print(line_items)
         session = stripe.checkout.Session.create(
             line_items=line_items,
             mode='payment',
+            currency=obj[0].currency_pay,
+            payment_method_types=['card'],
             success_url=f'{request._current_scheme_host + reverse("trade:trade_list")}',
             cancel_url=f'{request._current_scheme_host + reverse("trade:pre_order_detail")}',
         )

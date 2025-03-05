@@ -19,7 +19,7 @@ class Currency(models.Model):
     value = models.FloatField(verbose_name='курс валюты')
 
     def __str__(self):
-        return f'{self.code}'
+        return f'{self.code}'.lower()
 
     class Meta:
         verbose_name = 'курс валюты'

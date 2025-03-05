@@ -23,7 +23,8 @@
             <tr>
                 <th>Товар</th>
                 <th>Количество</th>
-                <th>Цена</th>
+                <th>Цена за шт.</th>
+                <th>Итого цена</th>
                 <th>Валюта</th>
                 <th>Удалить</th>
             </tr>
@@ -38,6 +39,7 @@
                     </td>
                     <td>{{ form.quantity }}</td>
                     <td>{{ form.instance.item.price|multiply:tax.tax_base }}</td>
+                    <td>{% total_item_amount form.instance.item.price tax.tax_base form.instance.quantity %}</td>
                     <td>{{ form.instance.item.currency }}</td>
                     <td>
                         <div class="form-check">
