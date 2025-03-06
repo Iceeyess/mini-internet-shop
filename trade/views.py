@@ -1,4 +1,6 @@
-from http.client import HTTPResponse
+import logging
+
+from django.http import HttpResponse, HttpResponseRedirect
 
 from django.forms import modelformset_factory
 from django.http import JsonResponse
@@ -15,6 +17,7 @@ import stripe
 from trade.services import generate_order_number
 
 
+logger = logging.getLogger(__name__)
 # Create your views here.
 
 
@@ -86,11 +89,11 @@ def pre_order_detail(request):
                 pre_order.currency_pay = currency  # сохраняем выбранный курс валюты расчета в БД
                 pre_order.save()
                 if pre_order.item.currency == currency:
-                    total_sum += pre_order.item.price + pre_order.item.price * get_object_or_404(Tax,
-                                                                                                 name='НДС').tax_base / 100 * pre_order.quantity
+                    total_sum += (pre_order.item.price + (pre_order.item.price *
+                                  get_object_or_404(Tax, name='НДС').tax_base / 100)) * pre_order.quantity
                 else:
-                    total_sum += (pre_order.item.price + (pre_order.item.price * get_object_or_404(Tax,
-                                                                                                   name='НДС').tax_base / 100)) * pre_order.quantity / get_object_or_404(
+                    total_sum += (pre_order.item.price + (pre_order.item.price *
+                        get_object_or_404(Tax, name='НДС').tax_base / 100)) * pre_order.quantity / get_object_or_404(
                         Currency, related_currency=currency.code).value
 
     else:
@@ -108,45 +111,55 @@ def get_payment_session(request):
     client_ip = get_client_ip(request)
     obj = PreOrder.objects.filter(client_ip=client_ip[0])
     stripe.api_key = STRIPE_SECRET_KEY
-    if obj:
-        line_items = []
-        for pre_order in obj:
-            if pre_order.currency_pay == pre_order.item.currency:
-                price = pre_order.item.price * 100  # умножается на 100 из-за копеек
-            else:
-                price = pre_order.item.price / pre_order.item.currency.value * 100  # умножается на 100 из-за копеек
-            try:
-                line_items.append({
-                    'price_data': {
-                        'currency': pre_order.currency_pay.code,
-                        'product_data': {
-                            'name': pre_order.item.name,
-                        },
-                        'unit_amount': int(price),
-                        'tax_behavior': 'exclusive',
-                    },
-                    'quantity': pre_order.quantity,
-                    'tax_rates': [pre_order.item.tax.stripe_tax_id, ]
-                })
-            except AttributeError:
-                return redirect('trade:pre_order_detail')
+    if not obj:
+        logger.warning("Корзина пуста для IP: %s", client_ip)
+        return HttpResponseRedirect(reverse('trade:pre_order_detail'))
 
-
+    line_items = []
+    total_amount = 0  # Общая сумма платежа в копейках
+    for pre_order in obj:
         try:
-            session = stripe.checkout.Session.create(
-            line_items=line_items,
-            mode='payment',
-            currency=obj[0].currency_pay,
-            payment_method_types=['card'],
-            success_url=f'{request._current_scheme_host + reverse("trade:create_success_page")}',
-            cancel_url=f'{request._current_scheme_host + reverse("trade:pre_order_detail")}',
-        )
-        except stripe.InvalidRequestError:
-            return HTTPResponse('Недопустимая сумма')
+            if pre_order.currency_pay == pre_order.item.currency:
+                price = int(pre_order.item.price * 100)  # умножается на 100 из-за копеек
+            else:
+                price = int(pre_order.item.price / pre_order.item.currency.value * 100)
 
-    else:
-        return redirect('trade:pre_order_detail')  # Перенаправление, если корзина пуста на ту же страницу
-    return redirect(session.url)
+            total_amount += price * pre_order.quantity
+            line_items.append({
+                'price_data': {
+                    'currency': pre_order.currency_pay.code.lower(),
+                    'product_data': {
+                        'name': pre_order.item.name,
+                    },
+                    'unit_amount': price,
+                    'tax_behavior': 'exclusive',
+                },
+                'quantity': pre_order.quantity,
+                'tax_rates': [pre_order.item.tax.stripe_tax_id, ]
+            })
+        except AttributeError as e:
+            logger.error("Ошибка атрибута для предзаказа: %s", e)
+            return HttpResponseRedirect(reverse('trade:pre_order_detail'))
+
+    if total_amount > 99999999:  # 999,999.99 рублей в копейках
+        logger.error("Сумма платежа превышает допустимый лимит: %s копеек", total_amount)
+        return HttpResponse("Сумма платежа превышает допустимый лимит в 999,999.99 рублей", status=400)
+
+    try:
+        session = stripe.checkout.Session.create(
+        line_items=line_items,
+        mode='payment',
+        currency=obj[0].currency_pay,
+        payment_method_types=['card'],
+        success_url=f'{request.build_absolute_uri(reverse("trade:create_success_page"))}',
+        cancel_url=f'{request.build_absolute_uri(reverse("trade:pre_order_detail"))}',
+    )
+    except stripe.InvalidRequestError as e:
+        logger.error("Ошибка Stripe: %s", e)
+        return HttpResponse("Недопустимая сумма или ошибка Stripe", status=400)
+
+    return HttpResponseRedirect(session.url)
+    
 
 
 def get_success_page(request):
